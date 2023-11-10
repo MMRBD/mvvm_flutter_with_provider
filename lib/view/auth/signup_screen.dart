@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 import 'package:mvvm_provider_flutter/res/widgets/custom_button.dart';
 import "package:provider/provider.dart";
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../utils/routes/routes_names.dart';
 import '../../utils/utils.dart';
@@ -23,98 +24,102 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final height = MediaQuery.of(context).size.height * 1;
-
     final authViewModel = Provider.of<AuthViewModel>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Sign up"), centerTitle: true),
+      appBar: AppBar(
+          title: const Text("Sign up"),
+          centerTitle: true,
+          automaticallyImplyLeading: false),
       body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: TextFormField(
-                controller: _emailController,
-                focusNode: _emailFocus,
-                keyboardType: TextInputType.emailAddress,
-                onFieldSubmitted: (value) {
-                  Utils.changeNodeFocus(context,
-                      current: _emailFocus, next: _passwordFocus);
-                },
-                decoration: InputDecoration(
-                  prefixIcon: const Icon(Icons.email),
-                  label: const Text("Email"),
-                  hintText: "Email",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(18.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                    height: 200,
+                    width: 200,
+                    child: SvgPicture.asset("assets/images/ic_login.svg")),
+                TextFormField(
+                  controller: _emailController,
+                  focusNode: _emailFocus,
+                  keyboardType: TextInputType.emailAddress,
+                  onFieldSubmitted: (value) {
+                    Utils.changeNodeFocus(context,
+                        current: _emailFocus, next: _passwordFocus);
+                  },
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.email),
+                    label: const Text("Email"),
+                    hintText: "Email",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: ValueListenableBuilder(
-                valueListenable: _obSecureNotifier,
-                builder: ((context, value, child) {
-                  return TextFormField(
-                    controller: _passwordController,
-                    focusNode: _passwordFocus,
-                    obscureText: _obSecureNotifier.value,
-                    obscuringCharacter: "*",
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      suffixIcon: InkWell(
-                        onTap: () {
-                          _obSecureNotifier.value = !_obSecureNotifier.value;
-                        },
-                        child: _obSecureNotifier.value
-                            ? const Icon(Icons.visibility)
-                            : const Icon(Icons.visibility_off),
+                const SizedBox(height: 10),
+                ValueListenableBuilder(
+                  valueListenable: _obSecureNotifier,
+                  builder: ((context, value, child) {
+                    return TextFormField(
+                      controller: _passwordController,
+                      focusNode: _passwordFocus,
+                      obscureText: _obSecureNotifier.value,
+                      obscuringCharacter: "*",
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: InkWell(
+                          onTap: () {
+                            _obSecureNotifier.value = !_obSecureNotifier.value;
+                          },
+                          child: _obSecureNotifier.value
+                              ? const Icon(Icons.visibility)
+                              : const Icon(Icons.visibility_off),
+                        ),
+                        label: const Text("Password"),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      label: const Text("Password"),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  );
-                }),
-              ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 30),
+                CustomButton(
+                    title: "Sign Up",
+                    loading: authViewModel.signupLoading,
+                    onPress: () {
+                      _passwordFocus.unfocus();
+
+                      if (_emailController.text.isEmpty &&
+                          _passwordController.text.isEmpty) {
+                        Utils.flushBarErrorMessage(
+                            "email aur password de bhai", context);
+                      } else if (_passwordController.text.isEmpty) {
+                        Utils.flushBarErrorMessage(
+                            "Password is empty!", context);
+                      } else if (_emailController.text.isEmpty) {
+                        Utils.flushBarErrorMessage("Email is empty!", context);
+                      } else {
+                        Map data = {
+                          "email": _emailController.text.toString(),
+                          "password": _passwordController.text.toString()
+                        };
+
+                        authViewModel.apiSignUp(data, context);
+                      }
+                    }),
+                const SizedBox(height: 30),
+                InkWell(
+                    onTap: () {
+                      Navigator.pushNamed(context, RouteNames.login);
+                    },
+                    child: const Text("Already have an account? Login!"))
+              ],
             ),
-            SizedBox(height: height * 0.08),
-            CustomButton(
-                title: "Sign Up",
-                loading: authViewModel.signupLoading,
-                onPress: () {
-                  _passwordFocus.unfocus();
-
-                  if (_emailController.text.isEmpty &&
-                      _passwordController.text.isEmpty) {
-                    Utils.flushBarErrorMessage(
-                        "email aur password de bhai", context);
-                  } else if (_passwordController.text.isEmpty) {
-                    Utils.flushBarErrorMessage("Password is empty!", context);
-                  } else if (_emailController.text.isEmpty) {
-                    Utils.flushBarErrorMessage("Email is empty!", context);
-                  } else {
-                    Map data = {
-                      "email": _emailController.text.toString(),
-                      "password": _passwordController.text.toString()
-                    };
-
-                    authViewModel.apiSignUp(data, context);
-                  }
-                }),
-            SizedBox(height: height * 0.02),
-            InkWell(
-                onTap: () {
-                  Navigator.pushNamed(context, RouteNames.login);
-                },
-                child: const Text("Already have an account? Login!"))
-          ],
+          ),
         ),
       ),
     );
